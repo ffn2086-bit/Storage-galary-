@@ -1,0 +1,1 @@
+include ':app'\nrootProject.name = "storage app"
