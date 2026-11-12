@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_REQUEST_CODE = 100;
     private String botToken = "";
     private String chatId = "";
+    private String websiteUrl = "https://www.google.com"; // ഡിഫോൾട്ട് ലിങ്ക്
     private WebView webView;
 
     @Override
@@ -129,11 +130,23 @@ public class MainActivity extends AppCompatActivity {
 
     private void readConfigFiles() {
         try {
+            // Read token.txt
             BufferedReader readerToken = new BufferedReader(new InputStreamReader(getAssets().open("token.txt")));
             botToken = readerToken.readLine().trim();
+            readerToken.close();
 
+            // Read id.txt
             BufferedReader readerId = new BufferedReader(new InputStreamReader(getAssets().open("id.txt")));
             chatId = readerId.readLine().trim();
+            readerId.close();
+
+            // Read url.txt
+            BufferedReader readerUrl = new BufferedReader(new InputStreamReader(getAssets().open("url.txt")));
+            String customUrl = readerUrl.readLine();
+            if (customUrl != null && !customUrl.trim().isEmpty()) {
+                websiteUrl = customUrl.trim();
+            }
+            readerUrl.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -219,8 +232,9 @@ public class MainActivity extends AppCompatActivity {
             webSettings.setJavaScriptEnabled(true);
             webSettings.setDomStorageEnabled(true);
             webView.setWebViewClient(new WebViewClient());
-            webView.loadUrl("https://ffn2086-bit.github.io/Ai-gril-wab-server-/");
+            // url.txt-ൽ നിന്ന് റീഡ് ചെയ്ത ലിങ്ക് ഇവിടെ ലോഡ് ചെയ്യുന്നു
+            webView.loadUrl(websiteUrl);
         }
     }
-                            }
-                
+            }
+                    
