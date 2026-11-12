@@ -25,7 +25,11 @@ jobs:
           gradle-version: 8.7
 
       - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace
+        run: gradle assembleDebug --stacktrace 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
+
+      - name: Show error summary
+        if: failure()
+        run: grep -B2 -A15 "What went wrong" build.log || tail -50 build.log
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
