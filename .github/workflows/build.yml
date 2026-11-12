@@ -25,11 +25,15 @@ jobs:
           gradle-version: 8.7
 
       - name: Build Debug APK
-        run: gradle assembleDebug --stacktrace 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
-
-      - name: Show error summary
-        if: failure()
-        run: grep -B2 -A15 "What went wrong" build.log || tail -50 build.log
+        run: |
+          set +e
+          gradle assembleDebug --stacktrace > build.log 2>&1
+          STATUS=$?
+          echo "## Build errors" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          grep -E "error:|What went wrong|Execution failed|Could not|not found|Caused by" -A4 build.log | head -60 >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          exit $STATUS
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
